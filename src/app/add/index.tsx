@@ -1,12 +1,13 @@
-import { Alert, Text, TouchableOpacity, View } from "react-native";
-import { styles } from "./styles";
-import { MaterialIcons } from "@expo/vector-icons";
-import { colors } from "@/src/styles/colors";
-import { router } from "expo-router";
+import { Button } from "@/src/components/button";
 import { Categories } from "@/src/components/categories";
 import { Input } from "@/src/components/input";
-import { Button } from "@/src/components/button";
+import { linkStorage } from "@/src/storage/link-storage";
+import { colors } from "@/src/styles/colors";
+import { MaterialIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { useState } from "react";
+import { Alert, Text, TouchableOpacity, View } from "react-native";
+import { styles } from "./styles";
 
 export default function Add() {
 
@@ -14,16 +15,36 @@ export default function Add() {
     const [name, setName] = useState("")
     const [url, setUrl] = useState("")
 
-    function handleAdd() {
-        if (!category) {
-            return Alert.alert("Categoria", "Selecione a categoria") 
+    async function handleAdd() {
+
+        try {
+
+            if (!category) {
+                return Alert.alert("Categoria", "Selecione a categoria")
+            }
+            if (!name.trim()) {
+                return Alert.alert("Nome", "Informe o nome")
+            }
+            if (!url.trim()) {
+                return Alert.alert("URL", "Informe a URL")
+            }
+
+            await linkStorage.save({
+                id: new Date().getTime().toString(),
+                name,
+                url,
+                category
+            })
+
+            const data = await linkStorage.get();
+
+            Alert.alert("Sucesso", "Novo link adicionado", [{ text: "Ok", onPress: () => router.back() }])
+
+        } catch (error) {
+            Alert.alert("Erro", "Não foi possível salvar o link")
+            console.log(error)
         }
-        if (!name.trim()) {
-            return Alert.alert("Nome", "Informe o nome") 
-        }
-        if (!url.trim()) {
-            return Alert.alert("URL", "Informe a URL") 
-        }
+
     }
 
     return (
@@ -38,8 +59,8 @@ export default function Add() {
             <Categories onChange={setCategory} selected={category} />
             <View style={styles.form}>
                 <Input placeholder="Nome" onChangeText={setName} autoCorrect={false} />
-                <Input placeholder="URL" onChangeText={setUrl}/>
-                <Button title="Adicionar" onPress={handleAdd}/>
+                <Input placeholder="URL" onChangeText={setUrl} autoCapitalize="none" />
+                <Button title="Adicionar" onPress={handleAdd} />
             </View>
         </View>
     )
